@@ -6,10 +6,11 @@ using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
 {
-    public InputField loadGameField;
     public InputField newGameField;
     public Text result;
+    public GameButton gameButton;
 
+    public RectTransform gameList;
     public GameObject optionsObject;
     public GameObject createGameObject;
     public GameObject loadGameObject;
@@ -53,6 +54,9 @@ public class MenuManager : MonoBehaviour
         Game newGame = new Game { gameName = gameName };
         sd.saves.Add(newGame);
 
+        result.text = "Utworzono gre!";
+        result.color = Color.green;
+
         FileManagment.WriteFile("save", sd);
     }
 
@@ -66,11 +70,33 @@ public class MenuManager : MonoBehaviour
     public void ToogleLoadGame()
     {
         loadGameObject.SetActive(!loadGameObject.activeSelf);
+
+        if (loadGameObject.activeSelf)
+            LoadGameList();
+        else
+            foreach (RectTransform child in gameList)
+                Destroy(child.gameObject);
     }
 
-    public void LoadGame()
+    private void LoadGameList()
     {
-        ApplicationModel.GameName = loadGameField.text;
+        SaveData sd = FileManagment.ReadFile<SaveData>("save");
+
+        if (sd == null || sd.saves == null)
+            return;
+
+        foreach (Game sdSave in sd.saves)
+        {
+            GameButton b = Instantiate(gameButton, gameList);
+            b.nameLabel.text = sdSave.gameName;
+            var save = sdSave;
+            b.buttonComponent.onClick.AddListener(delegate { LoadGame(save.gameName); });
+        }
+    }
+
+    public void LoadGame(string gname)
+    {
+        ApplicationModel.GameName = gname;
         SceneManager.LoadScene(1);
     }
 
